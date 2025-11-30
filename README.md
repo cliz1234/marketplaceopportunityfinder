@@ -135,7 +135,85 @@
 
 ### Спецификация API
 
-Представить описание реализованных функциональных возможностей ПС с использованием Open API (можно представить либо полный файл спецификации, либо ссылку на него)
+Серверная часть программного средства NicheScope реализована на Python (Django REST Framework) и предоставляет REST API для аутентификации пользователей, работы с маркетплейсами, поиска ниш и управления аналитическими отчётами.
+
+Документация к API описана в формате **OpenAPI 3.0** и генерируется автоматически с помощью библиотеки `drf-spectacular`. Актуальная спецификация размещена в репозитории серверной части:
+
+- Репозиторий сервера: https://github.com/cliz1234/marketplaceopportunityfinder_server  
+- `docs/openapi.yaml` — человекочитаемая спецификация OpenAPI  
+- `docs/openapi.json` — экспорт для импорта в Postman
+
+При локальном запуске серверного приложения интерактивная документация доступна по следующим URL:
+
+- Swagger UI: `http://localhost:8000/api/docs/swagger/`  
+- ReDoc: `http://localhost:8000/api/docs/redoc/`  
+- JSON-схема OpenAPI: `http://localhost:8000/api/schema/`  
+
+Файл `openapi.json` можно импортировать в Postman (раздел **Import → File**), после чего будет автоматически создана коллекция запросов к API.
+
+Конфигурация Swagger/OpenAPI в серверной части задаётся в файлах настроек Django:
+
+**`settings.py` (репозиторий `marketplaceopportunityfinder_server`):**
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "rest_framework",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "NicheScope API",
+    "DESCRIPTION": "API для анализа рыночных ниш и генерации отчётов",
+    "VERSION": "1.0.0",
+}
+from django.urls import path, include
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
+
+urlpatterns = [
+    # Основное API
+    path("api/", include("api.urls")),
+
+    # OpenAPI схема
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+
+    # Swagger UI
+    path(
+        "api/docs/swagger/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+
+    # ReDoc
+    path(
+        "api/docs/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
+]
+
+---
+
+## 2. Блок «Оценка качества кода»
+
+### 2.1. Что найти в README
+
+Чуть ниже по файлу у тебя сейчас:
+
+```markdown
+### Оценка качества кода
+
+Используя показатели качества и метрики кода, оценить его качество
+
 
 ### Безопасность
 
@@ -143,7 +221,27 @@
 
 ### Оценка качества кода
 
-Используя показатели качества и метрики кода, оценить его качество
+Оценка качества кода выполнялась для серверной части NicheScope (репозиторий `marketplaceopportunityfinder_server`). Для анализа были выбраны следующие метрики и инструменты:
+
+- цикломатическая сложность (Cyclomatic Complexity) — `radon cc`;
+- индекс сопровождаемости (Maintainability Index) — `radon mi`;
+- объём и структура кода (SLOC, количество комментариев) — `radon raw`;
+- статический анализ стиля и потенциальных ошибок — `pylint`;
+- покрытие модульными тестами — `pytest` + `pytest-cov`.
+
+Перед запуском анализа в виртуальном окружении проекта устанавливаются необходимые инструменты:
+
+```bash
+pip install radon pylint pytest pytest-cov
+
+Команды для расчёта метрик (выполняются из корня серверного репозитория):
+radon cc -s -a marketplace_finder   # или другое имя основного пакета сервера
+radon mi marketplace_finder
+radon raw marketplace_finder
+pylint marketplace_finder
+pytest --cov=marketplace_finder --cov-report=term-missing
+
+Результаты измерений сводятся в таблицу, которая включается в отчёт по лабораторной работе и может быть кратко отражена здесь:
 
 ---
 
